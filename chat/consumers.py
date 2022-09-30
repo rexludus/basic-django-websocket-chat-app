@@ -1,10 +1,11 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from django.utils.crypto import get_random_string
 
 class ChatRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         # extracting information from the routing.py
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
+        self.room_name = get_random_string(length=16)
         self.room_group_name = 'chat_%s' % self.room_name
         
         await self.channel_layer.group_add(
@@ -25,7 +26,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         )
 
 
-    # 'type': 'tester_message',
+    # 'type': 'send_credentials',
     async def send_credentials(self, event):
         room_name = event['room_name']
         room_group_name = event['room_group_name']
@@ -47,7 +48,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
-        
+        print(message)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
