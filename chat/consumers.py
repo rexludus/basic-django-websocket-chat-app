@@ -7,6 +7,10 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         # extracting information from the routing.py
         self.room_name = get_random_string(length=16)
         self.room_group_name = 'chat_%s' % self.room_name
+
+        # for handling the mobile requests
+        self.room_name_mobile = self.scope['url_route']['kwargs']['room_name_mobile']
+        self.room_group_name = 'chat_%s' % self.room_name_mobile
         
         await self.channel_layer.group_add(
             self.room_group_name,

@@ -6,3 +6,8 @@ def index(request):
 
 def no_room(request):
     return render(request, 'chatroom.html', {})
+
+def room(request, room_name_mobile):
+    return render(request, 'chatroom.html', {
+        'room_name_mobile': room_name_mobile
+    })
