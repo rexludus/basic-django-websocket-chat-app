@@ -1,15 +1,23 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from .models import WebSocket
+from .models import WebSocket, User
 from django.utils.crypto import get_random_string
 from channels.db import database_sync_to_async
+from asgiref.sync import sync_to_async
+
 
 @database_sync_to_async
-def write_websocket_credentials(token, room_name):
+def write_websocket_credentials(token, room_name, username):
+    print('--write_websocket_credentials---')
     WebSocket.objects.create(
         token = token,
         room_name = room_name,
+        username_websocket = username,
     )
+
+@database_sync_to_async
+def get_username(username):
+    return User.objects.get(username=username)
 
 class ChatRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -17,13 +25,20 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         # extracting information from the routing.py
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'chat_%s' % self.room_name
-
+        
         # create token
         token = get_random_string(length=32)
 
         #TODO
-        # add token and room_name to the db
-        #write_websocket_credentials(token, self.room_name)
+        # this should be came from the mobile phone via username field
+        mobile_data_user = 'sevilaykurt'
+        my_username = await get_username(mobile_data_user)
+        print('*******')
+        print(my_username)
+        print('*******')
+
+        await write_websocket_credentials(token, self.room_name, my_username)
+
 
         # join clients to the same group
         await self.channel_layer.group_add(
