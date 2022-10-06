@@ -1,6 +1,15 @@
-from cgitb import text
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from .models import WebSocket
+from django.utils.crypto import get_random_string
+from channels.db import database_sync_to_async
+
+@database_sync_to_async
+def write_websocket_credentials(token, room_name):
+    WebSocket.objects.create(
+        token = token,
+        room_name = room_name,
+    )
 
 class ChatRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -8,7 +17,15 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         # extracting information from the routing.py
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'chat_%s' % self.room_name
-        
+
+        # create token
+        token = get_random_string(length=32)
+
+        #TODO
+        # add token and room_name to the db
+        #write_websocket_credentials(token, self.room_name)
+
+        # join clients to the same group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name,
@@ -17,20 +34,23 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         # accept the get request and make handshake
         await self.accept()
 
-        # send credentials to browser
+        # send credentials (token and room_name) to browser
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'send_credentials_to_browser',
                 'room_name': self.room_name,
+                'token': token
             }
         )
 
 
     async def send_credentials_to_browser(self, event):
         room_name = event['room_name']
+        token = event['token']
         await self.send(text_data=json.dumps({
             'room_name': room_name,
+            'token': token,
         }))
 
 
@@ -55,7 +75,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             {
                 'type': 'chatroom_message',
-                'message': "hello browser",
+                'message': message,
             }
         )
 
