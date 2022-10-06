@@ -1,9 +1,6 @@
 from cgitb import text
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, redirect
-
 
 class ChatRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -75,7 +72,6 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                 'user': user,
             }
         )
-
 
 
     async def chatroom_message(self, event):
